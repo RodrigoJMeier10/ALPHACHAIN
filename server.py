@@ -1,41 +1,17 @@
-from flask import Flask, request, jsonify
-import requests
-import threading
-from alphachain import Alphachain # Importamos el de Nivel 5
+from flask import Flask
+from alphachain import Alphachain
 
 app = Flask(__name__)
-bc = Alphachain(node_name="Rodrigo")
-PEERS = set() # Lista de otros nodos
+bc = Alphachain(node_name="Rodrigo_Replit")
 
-@app.route('/mine', methods=['POST'])
-def mine():
-    data = request.get_json()
-    bc.add_transaction(data['sender'], data['receiver'], data['amount'], data['data'])
-    block = bc.mine_block()
-    broadcast_block(block) # Avisar a todos los peers
-    return jsonify(block), 200
+@app.route('/')
+def home():
+    return f"ALPHACHAIN Online! Bloques: {len(bc.chain)} | Balance: {bc.get_balance('Rodrigo_Replit')} ALPHA"
 
-@app.route('/chain', methods=['GET'])
-def get_chain():
-    return jsonify([b.to_dict() for b in bc.chain]), 200
+@app.route('/mine_prediction')
+def mine_prediction():
+    bc.add_transaction("Rodrigo", "Ciencia", 0, "Prediccion: GLIMPSE-17775 dim 3x-5x antes 15/08/2027")
+    bc.mine_block()
+    return "Bloque minado y timestampiado!"
 
-@app.route('/add_peer', methods=['POST'])
-def add_peer():
-    peer = request.get_json()['peer']
-    PEERS.add(peer)
-    return jsonify({"msg": f"Peer {peer} agregado"}), 201
-
-def broadcast_block(block):
-    for peer in PEERS:
-        try: requests.post(f"{peer}/receive_block", json=block, timeout=2)
-        except: pass
-
-@app.route('/receive_block', methods=['POST'])
-def receive_block():
-    block = request.get_json()
-    # Acá validarías y agregarías si es más larga
-    print(f"Bloque recibido de la red: {block['index']}")
-    return jsonify({"msg": "OK"}), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+app.run(host='0.0.0.0', port=8080)
